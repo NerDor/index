@@ -107,7 +107,7 @@ class shopModel extends Model
             'tcate', 'ccate', 'pcate',
             'content', 'id'], ['id' => $id, 'uniacid' => 7]);
         if ($db->data == null) {
-            return ['code' => 3015, 'message' => '商品不存在s'];
+            return ['code' => 3015, 'message' => '商品不存在'];
         }
         return $db->data;
     }
