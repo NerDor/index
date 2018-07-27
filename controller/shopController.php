@@ -3,8 +3,7 @@
 namespace controller;
 
 use model\shopModel;
-use plugin\address\controller\getController;
-use core\curl;
+
 class shopController extends Controller
 {
     protected $mustPass = [
@@ -19,7 +18,7 @@ class shopController extends Controller
             ['value' => 'goodsId', 'code' => 3016, 'message' => '请输入商品ID'],
         ],
         'submitOrder' => [
-            ['value' => 'order', 'code' => 3022, 'message' => '请输入下单信息'],
+            ['value' => 'oreder', 'code' => 3022, 'message' => '请输入下单信息'],
             ['value' => 'province', 'code' => 3023, 'message' => '请输入省份'],
             ['value' => 'city', 'code' => 3024, 'message' => '请输入市'],
             ['value' => 'area', 'code' => 3025, 'message' => '请输入区'],
@@ -79,25 +78,12 @@ class shopController extends Controller
 
     public function submitOrder()
     {
-        $verfy_address = new getController();
-        $temp = $verfy_address->jdVF($this->post_data['province'], $this->post_data['city'], $this->post_data['area'], $this->post_data['town']);
-        if (!empty($temp['code'])) {
-            $this->showJson($temp['code'], 'eroor', $temp['message']);
+        $goods = new shopModel();
+        $data = $goods->getGoodsContent($this->post_data['goodsId']);
+        if (empty($data['code'])) {
+            $this->showJson(1004, 'success', $data);
         }
-        unset($verfy_address);
-        $temp=new shopModel();
-        $address_id=$temp->addAddress($this->post_data['appid'],$this->post_data['name'],$this->post_data['phone'],$this->post_data['province'],$this->post_data['city'],$this->post_data['area'],$this->post_data['town'],$this->post_data['address']);
-        $post_data=[
-            'goods[0][goodsid]'=>34794,
-            'goods[0][total]'=>1,
-            'goods[0][type]'=>1,
-            'addressid'=>$address_id
-        ];
-        var_dump($this->post_data['order']);exit;
-        $cookie=$temp->getCookie($this->post_data['appid']);
-        if(!empty($cookie['code'])){
-            $this->showJson($cookie['code'], 'eroor', $cookie['message']);
-        }
+
         $curl=new curl('https://www.vipfxh.com/app/index.php?i=7&c=entry&m=ewei_shopv2&do=mobile&r=order.create.submit');
         $curl->setCookie('e69a___ewei_shopv2_member_session_7='.$cookie);
         $curl->set(CURLOPT_SSL_VERIFYPEER,0);
@@ -106,5 +92,6 @@ class shopController extends Controller
         $return=$curl->post($post_data);
         $return=json_decode($return,1);
         var_dump($return);exit(12222);
+        $this->showJson($data['code'], 'eroor', $data['message']);
     }
 }
