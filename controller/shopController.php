@@ -83,6 +83,15 @@ class shopController extends Controller
         if (empty($data['code'])) {
             $this->showJson(1004, 'success', $data);
         }
+
+        $curl=new curl('https://www.vipfxh.com/app/index.php?i=7&c=entry&m=ewei_shopv2&do=mobile&r=order.create.submit');
+        $curl->setCookie('e69a___ewei_shopv2_member_session_7='.$cookie);
+        $curl->set(CURLOPT_SSL_VERIFYPEER,0);
+        $curl->set(CURLOPT_SSL_VERIFYHOST,0);
+        $curl->set(CURLOPT_FOLLOWLOCATION,1);
+        $return=$curl->post($post_data);
+        $return=json_decode($return,1);
+        var_dump($return);exit(12222);
         $this->showJson($data['code'], 'eroor', $data['message']);
     }
 }
