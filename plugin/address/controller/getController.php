@@ -26,14 +26,9 @@ class getController extends Controller
         $name=$this->post_data['name'];
         var_dump($a->jd($name));
     }
-    public function jdVF(){
-        $a=new getModel();
-        if(empty($this->post_data['d'])){
-            $this->post_data['d']=null;
-        }
-        $c=$a->jdVF($this->post_data['a'],$this->post_data['b'],$this->post_data['c'],$this->post_data['d']);
-        var_dump($c);
+    public function jdVF($province, $city, $area, $town=null){
+        $verfy=new getModel();
+        return $verfy->jdVF($province, $city, $area, $town);
     }
 }
-?>
 
