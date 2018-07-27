@@ -97,7 +97,7 @@ class shopModel extends Model
     public function getGoodsContent($id = 1)
     {
         if ($id < 1) {
-            return ['code' => 3015, 'message' => '商品不存在.'];
+            return ['code' => 3015, 'message' => '商品不存在'];
         }
         $db = new mysqlPdo('ewei_shop_goods');
         $db->get(['deduct3', 'cannotrefund', 'labelname ', 'weight',
