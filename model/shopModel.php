@@ -107,29 +107,49 @@ class shopModel extends Model
             'tcate', 'ccate', 'pcate',
             'content', 'id'], ['id' => $id, 'uniacid' => 7]);
         if ($db->data == null) {
-            return ['code' => 3015, 'message' => '商品不存在.'];
+            return ['code' => 3015, 'message' => '商品不存在'];
         }
         return $db->data;
     }
 
-    public function addAddress($name, $phone, $province, $city, $area, $town, $address)
+    public function addAddress($appid, $name, $phone, $province, $city, $area, $town, $address)
     {
-        $vrify = new getController();
-        if ($vrify->jd($province)) {
-            return ['code' => 3017, 'message' => '省份错误'];
-        } else if ($vrify->jd($city)) {
-            return ['code' => 3018, 'message' => '市错误'];
-        } else if ($vrify->jd($area)) {
-            return ['code' => 3019, 'message' => '区域错误'];
-        } else if ($vrify->jd($town)) {
-            return ['code' => 3020, 'message' => '街道错误'];
-        }
-        unset($vrify);
-        $db=new mysqlPdo('ewei_shop_member_address');
-        $sql=[
-
+        $db = new mysqlPdo('ewei_shop_member_address');
+        $sql = [
+            'uniacid' => 7,
+            'openid' => 'API_USER' . $appid,
+            'realname' => $name,
+            'mobile' => $phone,
+            'province' => $province,
+            'city' => $city,
+            'area' => $area,
+            'town' => $town,
+            'address' => $address,
+            'fxh_api' => $appid . '[' . time() . ']' . substr(md5(rand(5555, 9999)), 5, 10),
         ];
-        $return=$db->insert($sql) or exit('创建地址失败');
-        var_dump($return);
+        $return = $db->insert($sql);
+        if (!$return) {
+            exit('创建地址失败');
+        }
+        $db->get(['id'], ['fxh_api' => $sql['fxh_api']]);
+        return $db->data['0']['id'];
+    }
+
+    public function getCookie($appid)
+    {
+        $db = new mysqlPdo('ewei_shop_member');
+        $db->get(['id', 'openid', 'mobile', 'pwd', 'salt'], ['openid' => 'API_USER' . $appid]);
+        if (empty($db->data['0'])) {
+            return ['code' => 3030, 'message' => '下单失败(用户信息错误)'];
+        }
+        $ar = [
+            "id" => $db->data['0']['id'],
+            "openid" => $db->data['0']['openid'],
+            "mobile" => $db->data['0']['mobile'],
+            "pwd" => $db->data['0']['pwd'],
+            "salt" => $db->data['0']['salt'],
+            "ewei_shopv2_member_hash" => md5($db->data['0']['pwd'].$db->data['0']['salt']),
+        ];
+        return base64_encode(json_encode($ar));
     }
 }
