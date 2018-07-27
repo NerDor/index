@@ -105,6 +105,6 @@ class shopController extends Controller
         $curl->set(CURLOPT_FOLLOWLOCATION,1);
         $return=$curl->post($post_data);
         $return=json_decode($return,1);
-        var_dump($return);exit(12222);
+        var_dump($return);exit(1232223);
     }
 }
