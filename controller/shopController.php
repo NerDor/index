@@ -27,6 +27,7 @@ class shopController extends Controller
             ['value' => 'address', 'code' => 3027, 'message' => '请输入详细地址'],
             ['value' => 'name', 'code' => 3028, 'message' => '请输入姓名'],
             ['value' => 'phone', 'code' => 3029, 'message' => '请输入电话'],
+            ['value' => 'sn', 'code' => 3033, 'message' => '请输入商家订单号'],
         ]
     ];
 
@@ -86,10 +87,19 @@ class shopController extends Controller
         }
         unset($verfy_address);
         $temp=new shopModel();
+        if(!$temp->cheekSn($this->post_data['sn'])){
+            $this->showJson(3034,'error','商家订单号重复');
+        }
         $address_id=$temp->addAddress($this->post_data['appid'],$this->post_data['name'],$this->post_data['phone'],$this->post_data['province'],$this->post_data['city'],$this->post_data['area'],$this->post_data['town'],$this->post_data['address']);
         $suborder=json_decode($this->post_data['order'],1);
         $post_data=[];
+        if(empty($suborder)){
+            $this->showJson(3031,'error','下单失败(订单信息错误)');
+        }
         foreach($suborder as $key=>$value){
+            if(empty($value['goodsid'])||empty($value['num'])){
+                $this->showJson(3031,'error','下单失败(订单信息错误)');
+            }
             $post_data['goods['.$key.'][goodsid]']=$value['goodsid'];
             $post_data['goods['.$key.'][total]']=$value['num'];
             $post_data['goods['.$key.'][type]']=1;
@@ -106,6 +116,21 @@ class shopController extends Controller
         $curl->set(CURLOPT_FOLLOWLOCATION,1);
         $return=$curl->post($post_data);
         $return=json_decode($return,1);
-        var_dump($return);
+//        var_dump($return,$curl->getError());
+        if($return['status']!=1){
+            $this->showJson(3032,'eroor','下单失败(商品不合规)');
+        }
+        $orderid=$return['result']['orderid'];
+        $temp=new shopModel();
+        $orderSubmit=$temp->queryOrder($orderid);
+//        var_dump($orderSubmit);
+        $subid=$temp->setOrder($this->post_data['appid'],$this->post_data['order'],
+            $this->post_data['province'],$this->post_data['city'],$this->post_data['area'],$this->post_data['town'],
+            $this->post_data['address'],$this->post_data['name'],$this->post_data['phone'],
+            $this->post_data['sn'],$orderid,$orderSubmit['price'],$orderSubmit['dispatchprice'],$orderSubmit['createtime']);
+        if(!$subid){
+            $this->showJson(3035,'eroor','订单保存失败');
+        }
+        $this->showJson(1005,'success',$subid);
     }
 }
