@@ -87,13 +87,14 @@ class shopController extends Controller
         unset($verfy_address);
         $temp=new shopModel();
         $address_id=$temp->addAddress($this->post_data['appid'],$this->post_data['name'],$this->post_data['phone'],$this->post_data['province'],$this->post_data['city'],$this->post_data['area'],$this->post_data['town'],$this->post_data['address']);
-        $post_data=[
-            'goods[0][goodsid]'=>34794,
-            'goods[0][total]'=>1,
-            'goods[0][type]'=>1,
-            'addressid'=>$address_id
-        ];
-        var_dump($this->post_data['order']);exit;
+        $suborder=json_decode($this->post_data['order'],1);
+        $post_data=[];
+        foreach($suborder as $key=>$value){
+            $post_data['goods['.$key.'][goodsid]']=$value['goodsid'];
+            $post_data['goods['.$key.'][total]']=$value['num'];
+            $post_data['goods['.$key.'][type]']=1;
+        }
+        $post_data['addressid']=$address_id;
         $cookie=$temp->getCookie($this->post_data['appid']);
         if(!empty($cookie['code'])){
             $this->showJson($cookie['code'], 'eroor', $cookie['message']);

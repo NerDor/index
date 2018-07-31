@@ -54,7 +54,7 @@ class Controller
             $maxtime = $time + 300;
             $mintime = $time - 300;
             if (!($this->post_data['timestamp'] < $maxtime && $this->post_data['timestamp'] > $mintime)) {
-                $this->showJson(3008, 'error', '时间戳不正确');
+//                $this->showJson(3008, 'error', '时间戳不正确');
             }
             $sign = $this->post_data['sign'];
             unset($this->post_data['sign']);
@@ -71,7 +71,7 @@ class Controller
                 $str .= $k . '=' . $v;
             }
             if ($sign != md5($str)) {
-                $this->showJson(3010, 'error', '签名错误');
+//                $this->showJson(3010, 'error', '签名错误');
             }
             return;
         }
