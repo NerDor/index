@@ -13,6 +13,18 @@ use plugin\address\controller\getController;
 
 class shopModel extends Model
 {
+    //订单表相关定义
+    const order_status_pending_payment = 100;       //待付款
+    const order_status_pending_delivery = 200;      //待发货
+    const order_status_pending_received = 300;     //待收货
+    const order_status_ransaction_closure = 400;   //交易关闭
+    const order_status_refunded = 900;              //已退款
+    const order_refound_unreturned_goods = 100;       //未退货
+    const order_refound_application = 200;      //申请退货
+    const order_refound_through = 300;     //申请通过,退货中
+    const order_refound_finnish = 400;   //退款成功
+    const order_refound_refuse = 900;              //拒绝申请
+
     public function classify($parentid = 0)
     {
         $db = new mysqlPdo('ewei_shop_category');
@@ -148,8 +160,54 @@ class shopModel extends Model
             "mobile" => $db->data['0']['mobile'],
             "pwd" => $db->data['0']['pwd'],
             "salt" => $db->data['0']['salt'],
-            "ewei_shopv2_member_hash" => md5($db->data['0']['pwd'].$db->data['0']['salt']),
+            "ewei_shopv2_member_hash" => md5($db->data['0']['pwd'] . $db->data['0']['salt']),
         ];
         return base64_encode(json_encode($ar));
+    }
+    public function queryOrder($orderId){
+        $db=new mysqlPdo('ewei_shop_order');
+        $db->get(['id','openid','ordersn','price','dispatchprice','createtime'],['id'=>$orderId]);
+        return $db->data['0'];
+    }
+    public function cheekSn($sn){
+        $db=new mysqlPdo('fxhapi_order');
+        $db->get(['sn'],['sn'=>$sn]);
+        if(empty($db->data['0'])){
+            return true;
+        }else{
+            return false;
+        }
+    }
+    public function setOrder($appid, $order, $province, $city, $area, $town, $address, $name, $phone, $sn, $orderid, $total, $dispatchprice,$time)
+    {
+        $db = new mysqlPdo('fxhapi_order');
+        $return=$db->insert([
+            'appid' => $appid,
+            'name' => $name,
+            'phone' => $phone,
+            'province' => $province,
+            'city' => $city,
+            'area' => $area,
+            'town' => $town,
+            'address' => base64_encode($address),
+            'order_new' => base64_encode($order),
+            'orderid' => $orderid,
+            'total' => $total,
+            'dispatchprice' => $dispatchprice,
+            'sn' => $sn,
+            'refound' => self::order_refound_unreturned_goods,
+            'submit_time' => $time,
+            'status' => self::order_status_pending_payment
+        ]);
+        if($return!=1){
+            return false;
+        }
+        return [
+            'orderid'=>$orderid,
+            'total'=>$total,
+            'dispatchprice'=>$dispatchprice,
+            'sn'=>$sn,
+            'order'=>$order,
+        ];
     }
 }

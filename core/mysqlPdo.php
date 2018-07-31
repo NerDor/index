@@ -114,4 +114,7 @@ class mysqlPdo
         $sql = "insert into $this->table ($key) value ($value)";
         return $this->db->exec($sql);
     }
+    public function getError(){
+        return $this->db->errorInfo();
+    }
 }
