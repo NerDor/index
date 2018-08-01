@@ -210,4 +210,52 @@ class shopModel extends Model
             'order'=>$order,
         ];
     }
+    public function selectOrder($appid,$orderid,$sn){
+        $db=new mysqlPdo('fxhapi_order');
+        $db->get(['id','appid','orderid','sn','submit_time','total','status'],['orderid'=>$orderid,'sn'=>$sn],1);
+        if(empty($db->data['0'])){
+            return ['code' => 3036, 'message' => '订单不存在.'];
+        }else if((time()-7200)>$db->data['0']['submit_time']){
+            return ['code' => 3037, 'message' => '订单已过期,请重新提交.'];
+        }else if($db->data['0']['status']!=self::order_status_pending_payment){
+            return ['code' => 3041, 'message' => '订单已付款,请勿重复提交'];
+        }
+        $balance=new mysqlPdo('fxhapi_balance');
+        $balance->get(['id','appid','money','spent_money'],['appid'=>$appid],1);
+        $balance->data['0']['money']-=$db->data['0']['total'];
+        $balance->data['0']['spent_money']+=$db->data['0']['total'];
+
+        if(!$balance->data['0']['money']>0){
+            return ['code' => 3038, 'message' => '余额不足,请充值'];
+        }
+        if($balance->save()<1){
+            return ['code' => 3039, 'message' => '订单支付失败,请联系技术人员'];
+        }
+        $dba=new mysqlPdo('ewei_shop_order');
+        $dba->get(['id','price','paytype','status','paytime','isparent',],['id'=>$db->data['0']['orderid']],1);
+        if($dba->data['0']['isparent']){
+            $dbc=new mysqlPdo('ewei_shop_order');
+            $dbc->get(['id','paytype','status','paytime','isparent',],['parentid'=>$db->data['0']['orderid']]);
+            $new=[];
+            foreach ($dbc->data as $key=>$value){
+                $value['status']='1';
+                $value['paytype']='28';
+                $value['paytime']=$db->data['0']['submit_time'];
+                $new[]=$value;
+            }
+            $dbc->data=$new;
+            $dbc->save() or exit("系统错误(保存子表数据失败)");
+        }
+        $dba->data['0']['status']='1';
+        $dba->data['0']['paytype']='28';
+        $dba->data['0']['paytime']=$db->data['0']['submit_time'];
+        $dba->save() or exit("系统错误(保存分表数据失败)");
+        $db->data['0']['status']=self::order_status_pending_delivery;
+        $db->save() or exit("系统错误(保存主表数据失败)");
+        return [
+            'orderid'=>$db->data['0']['orderid'],
+            'total'=>$db->data['0']['total'],
+            'sn'=>$db->data['0']['sn'],
+        ];
+    }
 }

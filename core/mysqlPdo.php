@@ -90,7 +90,6 @@ class mysqlPdo
                 }
             }
             $sql .= " where id='" . $id . "'";
-//            echo $sql . '<br/>';
             $up_num += $this->db->exec($sql);
         }
         return $up_num;

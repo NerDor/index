@@ -28,7 +28,11 @@ class shopController extends Controller
             ['value' => 'name', 'code' => 3028, 'message' => '请输入姓名'],
             ['value' => 'phone', 'code' => 3029, 'message' => '请输入电话'],
             ['value' => 'sn', 'code' => 3033, 'message' => '请输入商家订单号'],
-        ]
+        ],
+        'payOrder' => [
+            ['value' => 'orderid', 'code' => 3040, 'message' => '请输入ordid'],
+            ['value' => 'sn', 'code' => 3033, 'message' => '请输入商家订单号']
+        ],
     ];
 
     public function address()
@@ -116,14 +120,12 @@ class shopController extends Controller
         $curl->set(CURLOPT_FOLLOWLOCATION,1);
         $return=$curl->post($post_data);
         $return=json_decode($return,1);
-//        var_dump($return,$curl->getError());
         if($return['status']!=1){
             $this->showJson(3032,'eroor','下单失败(商品不合规)');
         }
         $orderid=$return['result']['orderid'];
         $temp=new shopModel();
         $orderSubmit=$temp->queryOrder($orderid);
-//        var_dump($orderSubmit);
         $subid=$temp->setOrder($this->post_data['appid'],$this->post_data['order'],
             $this->post_data['province'],$this->post_data['city'],$this->post_data['area'],$this->post_data['town'],
             $this->post_data['address'],$this->post_data['name'],$this->post_data['phone'],
@@ -132,5 +134,13 @@ class shopController extends Controller
             $this->showJson(3035,'eroor','订单保存失败');
         }
         $this->showJson(1005,'success',$subid);
+    }
+    public function payOrder(){
+        $model=new shopModel();
+        $order=$model->selectOrder($this->post_data['appid'],$this->post_data['orderid'],$this->post_data['sn']);
+        if(!empty($order['code'])){
+            $this->showJson($order['code'],'eroor',$order['message']);
+        }
+        $this->showJson(1006,'success',$order);
     }
 }
